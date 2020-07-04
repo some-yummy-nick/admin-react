@@ -2,6 +2,7 @@ import React, {useState, useEffect, useRef} from 'react'
 import axios from 'axios'
 
 import '../../helpers/iframeLoader.js'
+import domHelper from "../../helpers/dom-helper"
 
 let virtualDom = null
 export const Editor = () => {
@@ -18,38 +19,28 @@ export const Editor = () => {
   const open = page => {
     setCurrentPage(page)
     axios.get(`../${page}?rnd=${Math.random()}`)
-      .then(res => parseStringToDom(res.data))
-      .then(wrapTextNodes)
+      .then(res => domHelper.parseStringToDom(res.data))
+      .then(domHelper.wrapTextNodes)
       .then(dom => {
         virtualDom = dom
         return dom
       })
-      .then(serializeDomToString)
+      .then(domHelper.serializeDomToString)
       .then(html => axios.post('./api/saveTempPage.php', {html}))
       .then(() => iframe.current.load('../temp.html'))
       .then(() => enableEditing())
   }
 
-  const serializeDomToString = dom => {
-    const serializer = new XMLSerializer()
-    return serializer.serializeToString(dom)
-  }
-
-  const parseStringToDom = str => {
-    const parser = new DOMParser()
-    return parser.parseFromString(str, 'text/html')
+  const save = () => {
+    const newDom = virtualDom.cloneNode(virtualDom)
+    domHelper.unWrapTextNodes(newDom)
+    const html = domHelper.serializeDomToString(newDom)
+    axios.post('./api/savePage.php', {pageName:currentPage, html})
   }
 
   const onTextEdit = element => {
     const id = element.getAttribute('nodeId')
     virtualDom.body.querySelector(`[nodeId="${id}"]`).innerHTML = element.innerHTML
-  }
-
-  const save = () => {
-    const newDom = virtualDom.cloneNode(virtualDom)
-    unWrapTextNodes(newDom)
-    const html = serializeDomToString(newDom)
-    axios.post('./api/savePage.php', {pageName:currentPage, html})
   }
 
   const enableEditing = () => {
@@ -60,36 +51,6 @@ export const Editor = () => {
           onTextEdit(element)
         })
       })
-  }
-
-  const wrapTextNodes = dom => {
-    const body = dom.body
-    let textNodes = []
-
-    function recursion(element) {
-      element.childNodes.forEach(node => {
-        if (node.nodeName === '#text' && node.nodeValue.trim().length > 0) {
-          textNodes.push(node)
-        } else {
-          recursion(node)
-        }
-      })
-    }
-
-    recursion(body)
-    textNodes.forEach((node, i) => {
-      const wrapper = dom.createElement('text-editor')
-      node.parentNode.replaceChild(wrapper, node)
-      wrapper.appendChild(node)
-      wrapper.setAttribute('nodeId', i)
-    })
-    return dom
-  }
-
-  const unWrapTextNodes = dom => {
-    dom.body.querySelectorAll('text-editor').forEach(element => {
-      element.parentNode.replaceChild(element.firstChild, element)
-    })
   }
 
   const loadPageList = () => {
