@@ -1,21 +1,23 @@
 import React, {useState, useEffect, useRef} from 'react'
 import axios from 'axios'
-import UIkit from 'uikit'
 
 import '../../helpers/iframeLoader.js'
 import domHelper from '../../helpers/dom-helper'
 import EditorText from '../../components/EditorText'
 import Spinner from '../../components/Spinner'
+import ConfirmModal from '../../components/ConfirmModal'
+import ChooseModal from '../../components/ChooseModal'
 
 let virtualDom = null
 export const Editor = () => {
   const [pageList, setPageList] = useState([])
-  const [pageName, setPageName] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [currentPage, setCurrentPage] = useState('index.html')
   const iframe = useRef(null)
 
-  const init = page => {
+  const init = (e, page) => {
+    if (e) e.preventDefault()
+    updateIsLoading()
     open(page, updateIsLoaded)
     loadPageList()
   }
@@ -31,7 +33,8 @@ export const Editor = () => {
       })
       .then(domHelper.serializeDomToString)
       .then(html => axios.post('./api/saveTempPage.php', {html}))
-      .then(() => iframe.current.load('../temp.html'))
+      .then(() => iframe.current.load('../fgrtghghgh5665hfg.html'))
+      .then(() => axios.post('./api/deleteTempPage.php'))
       .then(() => enableEditing())
       .then(() => injectStyles())
       .then(cb)
@@ -73,25 +76,8 @@ export const Editor = () => {
   }
 
   const loadPageList = () => {
-    axios.get('./api')
+    axios.get('./api/pageList.php')
       .then(res => setPageList(res.data))
-  }
-
-  const createNewPage = () => {
-    axios.post('./api/createNewPage.php', {name: pageName})
-      .then(() => {
-        loadPageList()
-        setPageName('')
-      })
-      .catch(() => alert('Страница уже существует!'))
-  }
-
-  const deletePage = page => {
-    axios.post('./api/deletePage.php', {name: page})
-      .then(() => {
-        loadPageList()
-      })
-      .catch(() => alert('Страницы не существует!'))
   }
 
   const updateIsLoading = () => {
@@ -103,7 +89,7 @@ export const Editor = () => {
   }
 
   useEffect(() => {
-    init(currentPage)
+    init(null, currentPage)
   }, [])
 
   const modal = true
@@ -117,37 +103,15 @@ export const Editor = () => {
     {spinner}
 
     <div className="panel">
+      <button uk-toggle="target: #modal-open"
+              className="uk-button uk-button-primary uk-margin-small-right">Открыть
+      </button>
       <button uk-toggle="target: #modal-save"
               className="uk-button uk-button-primary">Опубликовать
       </button>
     </div>
-
-    <div id="modal-save" uk-modal={modal.toString()}>
-      <div className="uk-modal-dialog uk-modal-body">
-        <h2 className="uk-modal-title">Сохранение</h2>
-        <p>Вы действительно хотите сохранить изменения?</p>
-        <p className="uk-text-right">
-          <button className="uk-button uk-button-default uk-modal-close" type="button">Отменить</button>
-          <button className="uk-button uk-button-primary uk-modal-close" onClick={() => save(() => {
-            UIkit.notification({message: 'Успешно сохранено', status: 'success'})
-          }, () => {
-            UIkit.notification({message: 'Ошибка сохранения', status: 'danger'})
-          })}
-                  type="button">Опубликовать
-          </button>
-        </p>
-      </div>
-    </div>
-    {/*<input value={pageName} onChange={e => setPageName(e.target.value)} type="text"/>*/}
-    {/*<button onClick={createNewPage}>Создать страницу</button>*/}
-    {/*<div className="pages">*/}
-    {/*{pageList.map((page, index) =>*/}
-    {/*<div key={`page-${index}`}>*/}
-    {/*{page}*/}
-    {/*<button onClick={() => deletePage(page)}>(x)</button>*/}
-    {/*</div>*/}
-    {/*)}*/}
-    {/*</div>*/}
+    <ConfirmModal modal={modal} target={'modal-save'} method={save}/>
+    <ChooseModal modal={modal} target={'modal-open'} data={pageList} redirect={init}/>
   </>
 }
 
