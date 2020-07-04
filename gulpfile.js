@@ -60,7 +60,7 @@ gulp.task("copy-assets", () => {
 });
 gulp.task("watch", () => {
     gulp.watch("./src/index.html", gulp.parallel("copy-html"));
-    gulp.watch("./src/scss/**/*.scss", gulp.parallel("build-scss"));
+    gulp.watch("./src/**/*.scss", gulp.parallel("build-scss"));
     gulp.watch("./src/**/*.js", gulp.parallel("build-js"));
     gulp.watch("./api/**/*.*", gulp.parallel("copy-api"));
     gulp.watch("./assets/**/*.*", gulp.parallel("copy-assets"));

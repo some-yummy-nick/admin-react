@@ -1,7 +1,23 @@
-iframe{
+@import "./uikit.scss";
+@import "../components/Spinner/Spinner";
+
+$panelHeight: 64px;
+*, *:before, *:after {
+    box-sizing: border-box;
+}
+
+iframe {
     position: absolute;
     left: 0;
-    top: 0;
+    top: $panelHeight;
     width: 100%;
-    height: 100vh;
+    height: calc(100vh - #{$panelHeight});
+}
+
+.panel {
+    display: flex;
+    justify-content: flex-end;
+    padding: 12px;
+    height: $panelHeight;
+    border-bottom: 1px solid;
 }
