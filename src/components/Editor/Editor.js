@@ -3,22 +3,23 @@ import axios from 'axios'
 
 import '../../helpers/iframeLoader.js'
 
+let virtualDom = null
 export const Editor = () => {
   const [pageList, setPageList] = useState([])
   const [pageName, setPageName] = useState('')
   const [currentPage, setCurrentPage] = useState('index.html')
   const iframe = useRef(null)
-  let virtualDom = null
+
   const init = page => {
     open(page)
     loadPageList()
   }
 
   const open = page => {
-    setCurrentPage(`../${page}?rnd=${Math.random()}`)
-    axios.get(`../${page}`)
+    setCurrentPage(page)
+    axios.get(`../${page}?rnd=${Math.random()}`)
       .then(res => parseStringToDom(res.data))
-      .then(wrapTextNode)
+      .then(wrapTextNodes)
       .then(dom => {
         virtualDom = dom
         return dom
@@ -44,6 +45,13 @@ export const Editor = () => {
     virtualDom.body.querySelector(`[nodeId="${id}"]`).innerHTML = element.innerHTML
   }
 
+  const save = () => {
+    const newDom = virtualDom.cloneNode(virtualDom)
+    unWrapTextNodes(newDom)
+    const html = serializeDomToString(newDom)
+    axios.post('./api/savePage.php', {pageName:currentPage, html})
+  }
+
   const enableEditing = () => {
     iframe.current.contentDocument.body.querySelectorAll('text-editor')
       .forEach(element => {
@@ -54,7 +62,7 @@ export const Editor = () => {
       })
   }
 
-  const wrapTextNode = dom => {
+  const wrapTextNodes = dom => {
     const body = dom.body
     let textNodes = []
 
@@ -76,6 +84,12 @@ export const Editor = () => {
       wrapper.setAttribute('nodeId', i)
     })
     return dom
+  }
+
+  const unWrapTextNodes = dom => {
+    dom.body.querySelectorAll('text-editor').forEach(element => {
+      element.parentNode.replaceChild(element.firstChild, element)
+    })
   }
 
   const loadPageList = () => {
@@ -105,6 +119,7 @@ export const Editor = () => {
   }, [])
 
   return <>
+    <button onClick={() => save()}>save</button>
     <iframe ref={iframe} src={currentPage} frameBorder="0"></iframe>
     {/*<input value={pageName} onChange={e => setPageName(e.target.value)} type="text"/>*/}
     {/*<button onClick={createNewPage}>Создать страницу</button>*/}
