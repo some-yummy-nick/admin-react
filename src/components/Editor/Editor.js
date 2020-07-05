@@ -9,6 +9,7 @@ import Spinner from '../../components/Spinner'
 import ConfirmModal from '../../components/ConfirmModal'
 import ChooseModal from '../../components/ChooseModal'
 import Panel from '../../components/Panel'
+import EditorMeta from '../../components/EditorMeta'
 
 let virtualDom = null
 export const Editor = () => {
@@ -134,6 +135,8 @@ export const Editor = () => {
     <ConfirmModal modal={modal} target={'modal-save'} method={save}/>
     <ChooseModal modal={modal} target={'modal-open'} data={pageList} redirect={init}/>
     <ChooseModal modal={modal} target={'modal-backup'} data={backupsList} redirect={restoreBackupsList}/>
+    {virtualDom ? <EditorMeta modal={modal} target={'modal-meta'} virtualDom={virtualDom}/> : false}
+
   </>
 }
 
