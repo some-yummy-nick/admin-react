@@ -10,6 +10,7 @@ import ConfirmModal from '../../components/ConfirmModal'
 import ChooseModal from '../../components/ChooseModal'
 import Panel from '../../components/Panel'
 import EditorMeta from '../../components/EditorMeta'
+import EditorImages from '../../components/EditorImages'
 
 let virtualDom = null
 export const Editor = () => {
@@ -32,6 +33,7 @@ export const Editor = () => {
     axios.get(`../${page}?rnd=${Math.random()}`)
       .then(res => domHelper.parseStringToDom(res.data))
       .then(domHelper.wrapTextNodes)
+      .then(domHelper.wrapImages)
       .then(dom => {
         virtualDom = dom
         return dom
@@ -45,14 +47,15 @@ export const Editor = () => {
       .then(cb)
   }
 
-  const save = (onSuccess, onError) => {
+  const save = () => {
     updateIsLoading()
     const newDom = virtualDom.cloneNode(virtualDom)
     domHelper.unWrapTextNodes(newDom)
+    domHelper.unWrapImages(newDom)
     const html = domHelper.serializeDomToString(newDom)
     axios.post('./api/savePage.php', {pageName: currentPage, html})
-      .then(onSuccess)
-      .catch(onError)
+      .then(() => showNotifications('Успешно сохранено', 'success'))
+      .catch(() => showNotifications('Ошибка сохранения', 'danger'))
       .finally(updateIsLoaded)
   }
 
@@ -62,6 +65,13 @@ export const Editor = () => {
         const id = element.getAttribute('nodeId')
         const virtualElement = virtualDom.body.querySelector(`[nodeId="${id}"]`)
         new EditorText(element, virtualElement)
+      })
+
+    iframe.current.contentDocument.body.querySelectorAll('[editableImgId')
+      .forEach(element => {
+        const id = element.getAttribute('editableImgId')
+        const virtualElement = virtualDom.body.querySelector(`[editableImgId="${id}"]`)
+        new EditorImages(element, virtualElement, updateIsLoading, updateIsLoaded, showNotifications)
       })
   }
 
@@ -74,6 +84,10 @@ export const Editor = () => {
     }
     text-editor:focus{
        outline:3px solid red;
+       outline-offset:8px
+    }
+    [editableImgId]:hover{
+       outline:3px solid orange;
        outline-offset:8px
     }
     `
@@ -115,6 +129,10 @@ export const Editor = () => {
     setIsLoading(false)
   }
 
+  const showNotifications = (message, status) => {
+    UIkit.notification({message, status})
+  }
+
   useEffect(() => {
     init(null, currentPage)
   }, [])
@@ -130,6 +148,7 @@ export const Editor = () => {
 
   return <>
     <iframe ref={iframe} src="" frameBorder="0"></iframe>
+    <input type="file" id="img-upload" accept="image/*" style={{display: 'none'}}/>
     {spinner}
     <Panel/>
     <ConfirmModal modal={modal} target={'modal-save'} method={save}/>
