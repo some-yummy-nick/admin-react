@@ -11,17 +11,28 @@ import ChooseModal from '../../components/ChooseModal'
 import Panel from '../../components/Panel'
 import EditorMeta from '../../components/EditorMeta'
 import EditorImages from '../../components/EditorImages'
+import Login from '../../components/Login'
 
 let virtualDom = null
+
 export const Editor = () => {
   const [pageList, setPageList] = useState([])
   const [backupsList, setBackupsList] = useState([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isInitialLoading, setInitialIsLoading] = useState(true)
+  const [isAuth, setIsAuth] = useState(false)
+  const [loginError, setLoginError] = useState(false)
+  const [loginLengthError, setLoginLengthError] = useState(false)
   const [currentPage, setCurrentPage] = useState('index.html')
   const iframe = useRef(null)
 
+  useEffect(() => {
+    checkAuth()
+  }, [])
+
   const init = (e, page) => {
     if (e) e.preventDefault()
+    if (!isAuth) return
     updateIsLoading()
     open(page, updateIsLoaded)
     loadPageList()
@@ -133,9 +144,37 @@ export const Editor = () => {
     UIkit.notification({message, status})
   }
 
+  const checkAuth = () => {
+    axios.get('./api/checkAuth.php').then(res => {
+      setIsAuth(res.data.auth)
+      setInitialIsLoading(false)
+    })
+  }
+
+  const login = password => {
+    if (password.length > 5) {
+      axios.post('./api/login.php', {password})
+        .then(res => {
+          setIsAuth(res.data.auth)
+          setLoginError(!res.data.auth)
+          setLoginLengthError(false)
+        })
+    } else {
+      setLoginError(false)
+      setLoginLengthError(true)
+    }
+  }
+
+  const logout = () => {
+    axios.get('./api/logout.php')
+      .then(() => {
+        window.location.replace('/')
+      })
+  }
+
   useEffect(() => {
     init(null, currentPage)
-  }, [])
+  }, [isAuth])
 
   useEffect(() => {
     loadBackupsList()
@@ -145,17 +184,27 @@ export const Editor = () => {
 
   let spinner
   isLoading ? spinner = <Spinner active/> : <Spinner/>
+  if (isInitialLoading) return <div className="overlay"/>
+  if (!isAuth) return <Login login={login} lengthErr={loginLengthError} logErr={loginError}/>
 
   return <>
     <iframe ref={iframe} src="" frameBorder="0"></iframe>
     <input type="file" id="img-upload" accept="image/*" style={{display: 'none'}}/>
     {spinner}
     <Panel/>
-    <ConfirmModal modal={modal} target={'modal-save'} method={save}/>
+    <ConfirmModal modal={modal} target={'modal-save'} method={save} text={{
+      title: 'Сохранение',
+      desc: 'Вы действительно хотите сохранить изменения?',
+      btn: 'Опубликовать'
+    }}/>
     <ChooseModal modal={modal} target={'modal-open'} data={pageList} redirect={init}/>
     <ChooseModal modal={modal} target={'modal-backup'} data={backupsList} redirect={restoreBackupsList}/>
     {virtualDom ? <EditorMeta modal={modal} target={'modal-meta'} virtualDom={virtualDom}/> : false}
-
+    <ConfirmModal modal={modal} target={'modal-logout'} method={logout} text={{
+      title: 'Выход из админки',
+      desc: 'Вы действительно хотите выйти?',
+      btn: 'Выйти'
+    }}/>
   </>
 }
 

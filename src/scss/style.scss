@@ -1,23 +1,7 @@
 @import "./uikit.scss";
+@import "./base.scss";
+@import "./overlay.scss";
+@import "./panel.scss";
+@import "./iframe.scss";
 @import "../components/Spinner/Spinner";
-
-$panelHeight: 64px;
-*, *:before, *:after {
-    box-sizing: border-box;
-}
-
-iframe {
-    position: absolute;
-    left: 0;
-    top: $panelHeight;
-    width: 100%;
-    height: calc(100vh - #{$panelHeight});
-}
-
-.panel {
-    display: flex;
-    justify-content: flex-end;
-    padding: 12px;
-    height: $panelHeight;
-    border-bottom: 1px solid;
-}
+@import "../components/Login/Login";

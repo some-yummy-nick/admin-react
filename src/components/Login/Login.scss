@@ -1,0 +1,26 @@
+.login-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 2;
+}
+
+.login{
+    max-width: 300px;
+    min-width: 300px;
+    padding: 30px;
+    background-color: #fff;
+    border-radius: 5px;
+}
+
+.login-error {
+    display: block;
+    color: red;
+    margin-top: 10px;
+}

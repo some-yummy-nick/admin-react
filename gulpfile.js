@@ -50,6 +50,9 @@ gulp.task("build-scss", () => {
 });
 
 gulp.task("copy-api", () => {
+    gulp.src("./api/**/.*")
+      .pipe(gulp.dest(dest + "/api"))
+
     return gulp.src("./api/**/*.*")
         .pipe(gulp.dest(dest + "/api"))
 });
