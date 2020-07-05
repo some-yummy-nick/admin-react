@@ -1,16 +1,30 @@
 import React from 'react'
 
-export const ChooseModal = ({modal, target, data, redirect}) =>
-  <div id={target} uk-modal={modal.toString()}>
+export const ChooseModal = ({modal, target, data, redirect}) => {
+  let msg
+  if (data.length < 1) {
+    msg = <div>Резервные копии не найдены!</div>
+  }
+  return <div id={target} uk-modal={modal.toString()}>
     <div className="uk-modal-dialog uk-modal-body">
       <h2 className="uk-modal-title">Открыть</h2>
+      {msg}
       <ul className="uk-list uk-list-divider">
-        {data.map(page =>
-          <li key={`page-${page}`}>
-            <a className="uk-link-muted uk-modal-close" href={page} onClick={e => redirect(e, page)}>
-              {page}
-            </a>
-          </li>
+        {data.map(item => {
+            if (item.time) {
+              return <li key={`page-${item.file}`}>
+                <a className="uk-link-muted uk-modal-close" href={item} onClick={e => redirect(e, item.file)}>
+                  Резервная копия от {item.time}
+                </a>
+              </li>
+            } else {
+              return <li key={`page-${item}`}>
+                <a className="uk-link-muted uk-modal-close" href={item} onClick={e => redirect(e, item)}>
+                  {item}
+                </a>
+              </li>
+            }
+          }
         )}
       </ul>
       <p className="uk-text-right">
@@ -19,6 +33,7 @@ export const ChooseModal = ({modal, target, data, redirect}) =>
       </p>
     </div>
   </div>
+}
 
 
 export default ChooseModal

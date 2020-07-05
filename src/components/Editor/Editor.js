@@ -1,5 +1,6 @@
 import React, {useState, useEffect, useRef} from 'react'
 import axios from 'axios'
+import UIkit from 'uikit'
 
 import '../../helpers/iframeLoader.js'
 import domHelper from '../../helpers/dom-helper'
@@ -7,10 +8,12 @@ import EditorText from '../../components/EditorText'
 import Spinner from '../../components/Spinner'
 import ConfirmModal from '../../components/ConfirmModal'
 import ChooseModal from '../../components/ChooseModal'
+import Panel from '../../components/Panel'
 
 let virtualDom = null
 export const Editor = () => {
   const [pageList, setPageList] = useState([])
+  const [backupsList, setBackupsList] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [currentPage, setCurrentPage] = useState('index.html')
   const iframe = useRef(null)
@@ -20,6 +23,7 @@ export const Editor = () => {
     updateIsLoading()
     open(page, updateIsLoaded)
     loadPageList()
+    loadBackupsList()
   }
 
   const open = (page, cb) => {
@@ -80,6 +84,28 @@ export const Editor = () => {
       .then(res => setPageList(res.data))
   }
 
+  const loadBackupsList = () => {
+    axios.get('./backups/backups.json')
+      .then(res => setBackupsList(res.data.filter(backup => {
+        return backup.page === currentPage
+      })))
+  }
+
+  const restoreBackupsList = (e, backup) => {
+    if (e) e.preventDefault()
+
+    UIkit.modal.confirm('Вы действительно хотите восстановить страницу из этой резервной копии? Все несохраненные данные будут потеряны!',
+      {labels: {ok: 'Восстановить', cancel: 'Отмена'}})
+      .then(() => {
+        updateIsLoading()
+        return axios.post('./api/restoreBackup.php', {page: currentPage, file: backup})
+      })
+      .then(() => {
+        open(currentPage, updateIsLoaded)
+      })
+
+  }
+
   const updateIsLoading = () => {
     setIsLoading(true)
   }
@@ -92,26 +118,22 @@ export const Editor = () => {
     init(null, currentPage)
   }, [])
 
+  useEffect(() => {
+    loadBackupsList()
+  }, [isLoading, currentPage])
+
   const modal = true
 
   let spinner
   isLoading ? spinner = <Spinner active/> : <Spinner/>
 
   return <>
-    <iframe ref={iframe} src={currentPage} frameBorder="0"></iframe>
-
+    <iframe ref={iframe} src="" frameBorder="0"></iframe>
     {spinner}
-
-    <div className="panel">
-      <button uk-toggle="target: #modal-open"
-              className="uk-button uk-button-primary uk-margin-small-right">Открыть
-      </button>
-      <button uk-toggle="target: #modal-save"
-              className="uk-button uk-button-primary">Опубликовать
-      </button>
-    </div>
+    <Panel/>
     <ConfirmModal modal={modal} target={'modal-save'} method={save}/>
     <ChooseModal modal={modal} target={'modal-open'} data={pageList} redirect={init}/>
+    <ChooseModal modal={modal} target={'modal-backup'} data={backupsList} redirect={restoreBackupsList}/>
   </>
 }
 
