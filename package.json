@@ -2,14 +2,19 @@
   "name": "admin",
   "pricate": true,
   "scripts": {
-    "start": "gulp"
+    "start": "env NODE_ENV=development gulp",
+    "build": "env NODE_ENV=production gulp build"
   },
   "devDependencies": {
     "@babel/core": "7.10.4",
     "@babel/preset-env": "7.10.4",
     "@babel/preset-react": "7.10.4",
+    "autoprefixer": "9.8.4",
     "babel-loader": "8.1.0",
     "gulp": "4.0.2",
+    "gulp-clean-css": "4.3.0",
+    "gulp-if": "3.0.0",
+    "gulp-postcss": "8.0.0",
     "gulp-sass": "4.1.0",
     "prettier": "2.0.5",
     "react": "16.13.1",

@@ -3,8 +3,8 @@ import React from 'react'
 export const Panel = () => {
   return <div className="panel">
     <div>
-      <a href="/">
-        <img src="../img/Block1/Logo.png" alt=""/>
+      <a href="/" title="На главную страницу сайта">
+        <img width="40" src="./assets/iсon-sem.svg" alt=""/>
       </a>
     </div>
     <div>
